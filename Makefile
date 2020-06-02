@@ -6,9 +6,9 @@
 #################################################################################
 
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUCKET = int-insights-news-segmentation
+BUCKET = int-insights-pan-bbc-churn-predictions
 PROFILE = default
-PROJECT_NAME = insights_news_segmentation
+PROJECT_NAME = pan-bbc-churn-predictions
 PYTHON_INTERPRETER = python3
 ENV=int
 
@@ -140,7 +140,7 @@ deploy_r_docker:
 	docker login https://${ACCOUNT}.dkr.ecr.eu-west-1.amazonaws.com -u AWS -p $$(aws ecr get-login --region eu-west-1 --registry-ids ${ACCOUNT} | cut -d' ' -f6); \
 	cd R-docker; \
 	./docker-build.sh; \
-	IMAGE="news-segmentation"; \
+	IMAGE="pan-bbc-churn-predictions"; \
 	TAG="0.0.1"; \
 	docker tag $${IMAGE} ${ACCOUNT}.dkr.ecr.eu-west-1.amazonaws.com/$${IMAGE}:$${TAG};\
 	docker push ${ACCOUNT}.dkr.ecr.eu-west-1.amazonaws.com/$${IMAGE}:$${TAG}
