@@ -41,7 +41,7 @@ pipeline {
     }
   }
   environment {
-    PIPELINE_NAME = 'insights-news-segmentation-pipeline'
+    PIPELINE_NAME = 'insights-pan-bbc-churn-predictions'
   }
   triggers {
     pollSCM('H/5 * * * *')
