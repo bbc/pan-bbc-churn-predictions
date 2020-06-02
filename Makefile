@@ -67,7 +67,6 @@ lint:
 package:
 	cp -R src/ airflow/plugins/$(PROJECT_NAME)/src/
 	cp -R SQL/ airflow/plugins/$(PROJECT_NAME)/SQL/
-	cp python_modules.sh airflow/plugins/$(PROJECT_NAME)/
 	zip --exclude=airflow/* --exclude=venv/* --exclude=.git/* --exclude=src/data/* --exclude=src/R/metastore_db/* -r airflow/plugins/$(PROJECT_NAME)/code.zip  --exclude src/spark/newsseg_allfeatures_ALL --exclude src/spark/*.csv -r airflow/plugins/$(PROJECT_NAME)/code.zip . .
 
 ## Upload Data to S3
