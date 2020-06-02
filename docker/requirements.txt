@@ -1,0 +1,13 @@
+shap
+sklearn
+seaborn
+pandas
+numpy
+boto3
+sqlalchemy
+lightgbm
+scipy
+matplotlib
+psycopg2-binary
+s3fs
+mlflow

@@ -1,0 +1,16 @@
+jupyterthemes
+shap
+sklearn
+seaborn
+pandas
+numpy
+boto3
+os
+json
+sqlalchemy
+lightgbm
+scipy
+matplotlib
+psycopg2-binary
+mlflow
+
