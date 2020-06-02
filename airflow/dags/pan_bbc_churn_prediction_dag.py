@@ -31,6 +31,7 @@ ENV_SCHEMAS = {
 }
 #SCHEMA = ENV_SCHEMAS[ENV]
 SCHEMA="central_insights_sandbox"
+PROJECT_NAME="pan-bbc-churn-predictions"
 PROJ_S3_BUCKET = f"{ENV}-insights-pan-bbc-churn-predictions".lower()
 base_path = f"s3://{PROJ_S3_BUCKET}"
 s3_path_input_training=f"{base_path}/data/input/training"
@@ -281,7 +282,7 @@ logging.info(f"Template searchpath: {AIRFLOW_EFS}/plugins/{PIPELINE_NAME}/src/sq
 dag = DAG(
     'pan-bbc-churn-pipeline',
     default_args=default_args,
-    template_searchpath=[f"{AIRFLOW_EFS}/plugins/"],
+    template_searchpath=[f"{AIRFLOW_EFS}/plugins/{PROJECT_NAME}"],
     description='Generate user churn probability predictions for iPlayer users',
     schedule_interval='0 12 * * SUN',
     max_active_runs=1,
