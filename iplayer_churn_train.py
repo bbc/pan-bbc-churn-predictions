@@ -31,7 +31,9 @@ from src import utils
 from src import fi
 
 #MLOps
-#import mlflow
+import mlflow
+from mlflow.tracking import MlflowClient
+from mlflow import sklearn
 
 # Directories
 pickle_dir = 'pickles/iplayer'
@@ -42,10 +44,17 @@ charts_dir="charts/perf"
 plot_distributions = False
 
 # Fetch credentials from AWS
-FEATURE_TRAINING_SET="../data/input/training/iplayer_training_set.csv"
+FEATURE_TRAINING_SET="../data/input/iplayer_training_set.csv"
 df = pd.read_csv(FEATURE_TRAINING_SET)
 print("Data loaded\n")
+EXPERIMENT_NAME=f"pan-bbc-churn-predictionst-{date.today()}"
+MLFLOW_ARTIFACT_LOCATION="s3://live-insights-mlflow/pan-bbc-churn"
 
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+client = MlflowClient()
+experiment_id_value = mlflow.create_experiment( name=EXPERIMENT_NAME, artifact_location=MLFLOW_ARTIFACT_LOCATION )
+
+mlflow.start_run(experiment_id=experiment_id_value, run_name=f"iplayer_churn_train-{date.today()}", nested=False )
 
 ## =======================
 ## METADATA
@@ -180,6 +189,9 @@ helper_features = ['ew_'+str(x) for x in range(2,14)] + \
 mvi = missing_values.missing_value_imputer(impute_strategies=impute_strategies,
                                            helper_features=helper_features)
 
+sklearn.save_model(mvi,f"missing_value_imputer-{date.today()}")
+sklearn.log_model(mvi,f"missing_value_imputer-{date.today()}")
+
 # Train the imputer on df (the training set)
 df_impute = mvi.train(df)
 
@@ -253,6 +265,8 @@ oh_vars = oh_encoder.oh_vars
 
 # Pickle the candidates
 utils.pickler(oh_encoder, pickle_dir+'/prep/oh_encoder')
+sklearn.save_model(oh_encoder,f"oh_encoder-{date.today()}")
+sklearn.log_model(oh_encoder,f"oh_encoder-{date.today()}")
 
 print("One-hot encoding completed\n")
 
@@ -262,6 +276,9 @@ print("One-hot encoding completed\n")
 ineligibles = naughty_list + empty_vars + invariates + oh_candidates + sqrt_candidates
 eligibles_untreated = [f for f in df.columns.tolist() if f not in ineligibles + id_vars]
 utils.pickler(eligibles_untreated, pickle_dir+'/prep/eligibles_untreated')
+
+sklearn.save_model(eligibles_untreated,f"eligibles_untreated-{date.today()}")
+sklearn.log_model(eligibles_untreated,f"eligibles_untreated-{date.today()}")
 
 # Drop deprecated / useless variables
 df = pd.concat([df[id_vars + eligibles_untreated], df_sqrt, df_OH], axis=1)
@@ -275,6 +292,9 @@ df = df[(df.active_last_week == 1) & (df.train_eligible == 1)]
 
 # Pickle
 utils.pickler(eligibles, pickle_dir+'/prep/eligibles')
+
+sklearn.log_model(eligibles,f"eligibles-{date.today()}")
+sklearn.save_model(eligibles,f"eligibles-{date.today()}")
 
 
 
@@ -306,6 +326,8 @@ X, y = X_pub, y_pub
     
 skf_model = StratifiedKFold(n_splits = n_folds, random_state=0)
 splits = skf_model.split(X, y)
+sklearn.save_model(skf_model,f"skf_model-{date.today()}")
+
 
 # Saving down the enumerator and indices from the SKF split for consistent reuse
 my_skf = [[i, (train_idx, test_idx)] for i, (train_idx, test_idx) in enumerate(splits)]
@@ -353,6 +375,9 @@ stack.fit(X_pub, y_pub, X_priv, y_priv, X_holdout, y_holdout, my_skf)
 
 # Store the fitted model stack =====================
 utils.pickler(stack, pickle_dir+'/models/stack')
+sklearn.save_model(stack,f"stack-{date.today()}")
+sklearn.log_model(stack,f"stack-{date.today()}")
+
 
 # Checking the performance against the holdout dataset
 y_holdout_predictions = stack.predict(X_holdout)
@@ -361,6 +386,9 @@ y_holdout_predictions = stack.predict(X_holdout)
 from sklearn.metrics import log_loss
 holdout_logl = avg_logl = round(log_loss(y_holdout, y_holdout_predictions),2)
 print('Stacked log-loss against out-of-time holdout: '+str(log_loss(y_holdout, y_holdout_predictions))) 
+
+mlflow.log_metric("holdout_log_loss",holdout_logl)
+mlflow.log_metric("average_log_loss",avg_logl)
 
 ## =======================
 ## LOGISTIC REGRESSION
@@ -393,23 +421,31 @@ with open(pickle_dir+'/fi/little_fi.pickle', 'wb') as output_file:
     pickle.dump(stack.fi_dict, output_file)
 
     #MLflow save model
+    sklearn.save_model( stack.fi_dict, "stack.fi_dict.pickle" )
+    sklearn.log_model( stack.fi_dict,  "stack.fi_dict.pickle" )
 
 # little learners - roc performance
 with open(pickle_dir+'/perf/little_roc.pickle', 'wb') as output_file:
     pickle.dump(stack.roc_dict, output_file)
 
+
     #MLflow save model little learner
-    
+    sklearn.save_model( stack.roc_dict, "stack.roc_dict.pickle" )
+    sklearn.log_model( stack.roc_dict, "stack.roc_dict.pickle" )
+
 # blender - feature importance
 with open(pickle_dir+'/perf/blender_fi.pickle', 'wb') as output_file:
     pickle.dump(stack.coeff_values, output_file)
 
     #MLflow save model blender feature importance
-
+    sklearn.save_model( stack.coeff_values, "stack_coeff_values.pickle" )
+    sklearn.log_model( stack.coeff_values, "stack_coeff_values.pickle" )
 
 # blender - roc performance
 with open(pickle_dir+'/perf/stack_roc.pickle', 'wb') as output_file:
     pickle.dump(stack.roc, output_file)
 
     #MLflow save model blender
+    sklearn.save_model(stack.roc, "stack_roc.pickle")
+    sklearn.log_model( stack.roc, "stack.roc.pickle")
 

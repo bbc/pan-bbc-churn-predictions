@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 import boto3
 import os
 import json
+from datetime import date
 
 # Number things
 import pandas as pd
@@ -32,6 +33,10 @@ import shap
 from src import utils
 from src import fi
 
+#MLOps
+import mlflow
+from mlflow import sklearn
+from mlflow.tracking import MlflowClient
 
 # Directories
 pickle_dir = 'pickles/iplayer'
@@ -47,10 +52,17 @@ save_shap_sample = True
 # query = """select * from central_insights_sandbox.ap_churn_iplayer_score_sample_profiler"""
 # profiles = pd.read_sql_query(query, engine)
 
-SCORE_SAMPLE_FILE="../data/input/score/iplayer_churn_score_sample.csv"
+SCORE_SAMPLE_FILE="../data/input/iplayer_churn_score_sample.csv"
 df=pd.read_csv(SCORE_SAMPLE_FILE)
-BUCKET_NAME="int-insights-pan-bbc-churn-predictions"
+BUCKET_NAME="live-insights-pan-bbc-churn-predictions"
 
+
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
+client = MlflowClient()
+
+EXPERIMENT_NAME=f"pan-bbc-churn-predictionst-{date.today()}"
+current_experiments = client.list_experiments()
+experiment_id_value=[str(current_experiments[item].experiment_id) for item in range(len(current_experiments)) if current_experiments[item].name==EXPERIMENT_NAME][0]
 
 print("Data loaded\n")
 
@@ -134,7 +146,10 @@ weak_learner_classes_long = weak_learner_classes_long.merge(weak_learner_thresho
 ### W/C 13th JAN: Just need to convert this to a dataframe and join on, then can push to redshift and get loaded into Shiny
 
 print(weak_learner_preds_long.head(10))
+#mlflow.log_metric("weak_learner_preds_long",weak_learner_preds_long)
+
 print(weak_learner_classes_long.head(10))
+#mlflow.log_metric("weak_learner_classes_long",weak_learner_classes_long)
 
 from datetime import datetime
 
@@ -144,7 +159,8 @@ optimal_classification[optimal_classification >= optimal_threshold] = 1
 optimal_classification[optimal_classification < optimal_threshold] = 0
 optimal_classification = optimal_classification.astype(int)
 
-#Store the above in an MLflow run;
+mlflow.log_metric("optimal_threshold",optimal_threshold)
+#mlflow.log_metric("optimal_classification",optimal_classification) -- this is a list, needs double or byte-like object
 
 
 # Export meta-model scores to Redshift
@@ -158,6 +174,16 @@ df_export_meta = pd.DataFrame({
     'optimal_classification': optimal_classification
 })
 
+#mlflow.log_metric("bbc_hid3-meta",df['bbc_hid3']) -- needs double or byte-like object
+#mlflow.log_metric("target_week_start_date-meta",df['target_week_start_date']) -- needs double or byte-like object
+#mlflow.log_metric('meta-learner',"learner_type-meta") -- needs double or byte-like object
+#mlflow.log_metric('iplayer-meta',"learner_name-meta") -- needs double or byte-like object
+#mlflow.log_metric("predicted_probability-meta",y_predictions)
+
+mlflow.log_metric("optimal_threshold-meta",optimal_threshold)
+#mlflow.log_metric("optimal_classification-meta",optimal_classification)
+
+
 df_export_weak = pd.DataFrame({
     'bbc_hid3': weak_learner_preds_long['bbc_hid3'],
     'target_week_start_date': weak_learner_preds_long['target_week_start_date'],
@@ -168,12 +194,19 @@ df_export_weak = pd.DataFrame({
     'optimal_classification': weak_learner_classes_long['classification'].astype(int)
 })
 
+#mlflow.log_metric(weak_learner_preds_long['bbc_hid3'],"bbc_hid3-weak")
+#mlflow.log_metric(weak_learner_preds_long['target_week_start_date'],"target_week_start_date-weak")
+#mlflow.log_metric('weak-learner',"learner_type-meta")
+#mlflow.log_metric(weak_learner_preds_long['weak_learner'],"learner_name-weak")
+#mlflow.log_metric(weak_learner_preds_long['prediction'],"predicted_probability-weak")
+#mlflow.log_metric(weak_learner_classes_long['threshold'],"optimal_threshold-weak")
+#mlflow.log_metric(weak_learner_classes_long['classification'].astype(int),"optimal_classification-weak")
+
 
 df_export = pd.concat([df_export_meta, df_export_weak])
 
 df_export['score_datetime'] = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
 
-#Store values above with MLflow
 
 
 # utils.rs_upload(df=df_export,
@@ -197,7 +230,7 @@ df_export.to_csv("s3://int-insights-pan-bbc-churn-predictions/data/output/loyalt
 # print(stack.shap_sample_dict['little_lgbm'].head(10))
 if save_shap_sample:
     for (model_name, shap_values) in stack.shap_sample_dict.items():
-    
+
         ### Update the archive with scores for this date - WILL OVERWRITE IF THE DATA ISN'T UPDATED
         shap_values.reset_index(level=['bbc_hid3','target_week_start_date'], inplace=True)
         target_dates = shap_values.target_week_start_date.unique()
@@ -208,7 +241,9 @@ if save_shap_sample:
             .drop(['bbc_hid3', 'target_week_start_date'], axis=1)
             .to_csv('s3://int-insights-pan-bbc-churn-predictions/loyalty/iplayer/shap-values/current/{model}.csv'.format(model = model_name), index=True)
             )
-    
+
+        # Are shap values needed in MLflow(?)
+
         # Loop over dates and add filtered dataset to each folder
         for date in target_dates:
             t = pd.to_datetime(str(date)).strftime('%Y%m%d')
@@ -220,15 +255,16 @@ if save_shap_sample:
                 .to_csv('s3://int-insights-pan-bbc-churn-predictions/loyalty/iplayer/shap-values/{date}/{model}.csv'.format(date = t, model = model_name), index=True)
             )
 
-            #Store this in MLflow
-
 # Export feature importances to S3
 for (model_name, fi) in stack.fi_dict.items():
 
     # Average the feature importance across folds and push to S3
     (pd.DataFrame(fi.importances.mean(1), columns=['gain'])
         .rename_axis('feature')
-        .to_csv('s3://int-insights-pan-bbc-churn-predictions/loyalty/iplayer/fi/{model}.csv'.format(model = model_name), index=True)
+        .to_csv('s3://live-insights-pan-bbc-churn-predictions/loyalty/iplayer/fi/{model}.csv'.format(model = model_name), index=True)
     )
 
-    #Run this with MLflow
+    #Store feature importance with MLflow
+
+
+mlflow.end_run()
