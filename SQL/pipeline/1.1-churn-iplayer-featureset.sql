@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_iplayer_feature_set;
-CREATE TABLE central_insights_sandbox.ap_churn_iplayer_feature_set AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_iplayer_feature_set;
+CREATE TABLE central_insights_sandbox.tp_churn_iplayer_feature_set AS
 SELECT
   -- id_vars // churn-target
   targ.bbc_hid3,
@@ -266,110 +266,110 @@ SELECT
   timeandday.dow_saturday as iplayer_dow_saturday,
   timeandday.dow_sunday as iplayer_dow_sunday
 
-FROM central_insights_sandbox.ap_churn_target targ
+FROM central_insights_sandbox.tp_churn_target targ
        LEFT JOIN
-     central_insights_sandbox.ap_churn_cohorts coh
+     central_insights_sandbox.tp_churn_cohorts coh
      ON targ.bbc_hid3 = coh.bbc_hid3
      AND targ.fresh = coh.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_weekly_active_pivot events
+     central_insights_sandbox.tp_churn_weekly_active_pivot events
      ON targ.bbc_hid3 = events.bbc_hid3
      AND targ.fresh = events.fresh
        AND events.destination = 'iplayer'
        LEFT JOIN
-     central_insights_sandbox.ap_churn_13week_lin_reg iplayer_linreg
+     central_insights_sandbox.tp_churn_13week_lin_reg iplayer_linreg
      ON targ.bbc_hid3 = iplayer_linreg.bbc_hid3
      AND targ.fresh = iplayer_linreg.fresh
        AND iplayer_linreg.destination = 'iplayer'
        LEFT JOIN
-     central_insights_sandbox.ap_churn_13week_lin_reg sounds_linreg
+     central_insights_sandbox.tp_churn_13week_lin_reg sounds_linreg
      ON targ.bbc_hid3 = sounds_linreg.bbc_hid3
      AND targ.fresh = sounds_linreg.fresh
        AND sounds_linreg.destination = 'sounds'
 --        LEFT JOIN
---      central_insights_sandbox.ap_churn_sounds_product_mix sounds_only
+--      central_insights_sandbox.tp_churn_sounds_product_mix sounds_only
 --      ON targ.bbc_hid3 = sounds_only.bbc_hid3
        LEFT JOIN
-     central_insights_sandbox.ap_churn_genre_features genre_aff
+     central_insights_sandbox.tp_churn_genre_features genre_aff
      ON targ.bbc_hid3 = genre_aff.bbc_hid3
      AND targ.fresh = genre_aff.fresh
        AND genre_aff.destination = 'iplayer'
        LEFT JOIN
-     central_insights_sandbox.ap_churn_lw_features lw
+     central_insights_sandbox.tp_churn_lw_features lw
      ON targ.bbc_hid3 = lw.bbc_hid3
      AND targ.fresh = lw.fresh
        AND lw.destination = 'PS_IPLAYER'
        --we don't want anybody without an entry in the profile table
        INNER JOIN
-     central_insights_sandbox.ap_churn_demos demos
+     central_insights_sandbox.tp_churn_demos demos
      ON targ.bbc_hid3 = demos.bbc_hid3
        LEFT JOIN
-     central_insights_sandbox.ap_churn_last_seg last_seg
+     central_insights_sandbox.tp_churn_last_seg last_seg
      ON targ.bbc_hid3 = last_seg.bbc_hid3
      AND targ.fresh = last_seg.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_devices devices
+     central_insights_sandbox.tp_churn_devices devices
      ON targ.bbc_hid3 = devices.bbc_hid3
      AND targ.fresh = devices.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_sounds_activating_users sounds_acti
+     central_insights_sandbox.tp_churn_sounds_activating_users sounds_acti
      ON targ.bbc_hid3 = sounds_acti.bbc_hid3
      AND targ.fresh = sounds_acti.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_iplayer_activating_users iplayer_acti
+     central_insights_sandbox.tp_churn_iplayer_activating_users iplayer_acti
      ON targ.bbc_hid3 = iplayer_acti.bbc_hid3
      AND targ.fresh = iplayer_acti.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_favourite_content_sounds sounds_fav
+     central_insights_sandbox.tp_churn_favourite_content_sounds sounds_fav
      ON targ.bbc_hid3 = sounds_fav.bbc_hid3
      AND targ.fresh = sounds_fav.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_favourite_content_iplayer iplayer_fav
+     central_insights_sandbox.tp_churn_favourite_content_iplayer iplayer_fav
      ON targ.bbc_hid3 = iplayer_fav.bbc_hid3
      AND targ.fresh = iplayer_fav.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_mkt_optin mkt_optin
+     central_insights_sandbox.tp_churn_mkt_optin mkt_optin
      ON targ.bbc_hid3 = mkt_optin.bbc_hid3
      AND targ.fresh = mkt_optin.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_mkt_activity mkt_activity
+     central_insights_sandbox.tp_churn_mkt_activity mkt_activity
      ON targ.bbc_hid3 = mkt_activity.bbc_hid3
      AND targ.fresh = mkt_activity.fresh
        LEFT JOIN
-     central_insights_sandbox.ap_churn_iplayer_my_progs iplayer_myprogs
+     central_insights_sandbox.tp_churn_iplayer_my_progs iplayer_myprogs
      ON targ.bbc_hid3 = iplayer_myprogs.bbc_hid3
      AND targ.fresh = iplayer_myprogs.fresh
        LEFT JOIN
-    central_insights_sandbox.ap_churn_timeandday timeandday
+    central_insights_sandbox.tp_churn_timeandday timeandday
     ON targ.bbc_hid3 = timeandday.bbc_hid3
     AND targ.fresh = timeandday.fresh
     and timeandday.destination = 'iplayer'
 WHERE targ.destination = 'iplayer'
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_feature_set TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_iplayer_feature_set TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_iplayer_training_sample;
-CREATE TABLE central_insights_sandbox.ap_churn_iplayer_training_sample AS
-SELECT * FROM central_insights_sandbox.ap_churn_iplayer_feature_set
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_iplayer_training_sample;
+CREATE TABLE central_insights_sandbox.tp_churn_iplayer_training_sample AS
+SELECT * FROM central_insights_sandbox.tp_churn_iplayer_feature_set
 WHERE fresh=0
   AND iplayer_active_last_week = 1
 ORDER BY random()
 LIMIT 100000
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_training_sample TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_iplayer_training_sample TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_iplayer_score_sample;
-CREATE TABLE central_insights_sandbox.ap_churn_iplayer_score_sample AS
-SELECT * FROM central_insights_sandbox.ap_churn_iplayer_feature_set
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_iplayer_score_sample;
+CREATE TABLE central_insights_sandbox.tp_churn_iplayer_score_sample AS
+SELECT * FROM central_insights_sandbox.tp_churn_iplayer_feature_set
 WHERE fresh=1
   AND iplayer_active_last_week = 1
 ORDER BY random()
 LIMIT 10000
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_score_sample TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_iplayer_score_sample TO GROUP central_insights;
 
 
--- ALTER TABLE central_insights_sandbox.ap_churn_iplayer_score_sample RENAME TO ap_churn_iplayer_score_sample_big;
+-- ALTER TABLE central_insights_sandbox.tp_churn_iplayer_score_sample RENAME TO tp_churn_iplayer_score_sample_big;
 --target: 0
 --active: 0
 --lin reg: 0
@@ -383,18 +383,18 @@ GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_score_sample TO GROUP cen
 --duplicates
 -- select count(*) from (
 --                        select bbc_hid3, fresh, count(*) as count
---                        from central_insights_sandbox.ap_churn_iplayer_feature_set
+--                        from central_insights_sandbox.tp_churn_iplayer_feature_set
 --                        group by 1, 2
 --                        having count > 1
 --                      ) dupes;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_iplayer_score_sample;
-CREATE TABLE central_insights_sandbox.ap_churn_iplayer_score_sample AS
-SELECT * FROM central_insights_sandbox.ap_churn_iplayer_feature_set
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_iplayer_score_sample;
+CREATE TABLE central_insights_sandbox.tp_churn_iplayer_score_sample AS
+SELECT * FROM central_insights_sandbox.tp_churn_iplayer_feature_set
 WHERE fresh=1
   AND iplayer_active_last_week = 1
 ORDER BY random()
 LIMIT 10000
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_score_sample TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_iplayer_score_sample TO GROUP central_insights;
 

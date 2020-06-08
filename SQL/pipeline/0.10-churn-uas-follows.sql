@@ -24,8 +24,8 @@ iPlayer send a 'Feedback' activity to UAS when a user chooses to 'Remove' a prog
 UAS FOLLOWS
 ###########
 */
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_uas_follows_reduced;
-CREATE TABLE central_insights_sandbox.ap_churn_uas_follows_reduced
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_uas_follows_reduced;
+CREATE TABLE central_insights_sandbox.tp_churn_uas_follows_reduced
   distkey (bbc_hid3)
 AS
 SELECT
@@ -38,13 +38,13 @@ SELECT
     WHERE uas.resourcetype in ('brand', 'genre', 'clip', 'artist', 'playlist', 'series', 'track', 'episode')
       and uas.activitytype in ('FOLLOWS', 'FAVOURITES')
       and uas.resourcedomain in ('tv', 'music', 'radio')
-      and uas.cal_yyyymmdd::date >= (select min(mindate) from central_insights_sandbox.ap_churn_cohort_dates)
+      and uas.cal_yyyymmdd::date >= (select min(mindate) from central_insights_sandbox.tp_churn_cohort_dates)
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_uas_follows_reduced TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_uas_follows_reduced TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_iplayer_my_progs;
-CREATE TABLE central_insights_sandbox.ap_churn_iplayer_my_progs
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_iplayer_my_progs;
+CREATE TABLE central_insights_sandbox.tp_churn_iplayer_my_progs
   distkey (bbc_hid3)
 AS
 SELECT
@@ -58,8 +58,8 @@ SELECT
            coh.fresh,
            follow_date,
            case when follow_date >= coh.lastweekstart then 1 else 0 end as followed_last_week
-    FROM central_insights_sandbox.ap_churn_uas_follows_reduced uas
-           INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+    FROM central_insights_sandbox.tp_churn_uas_follows_reduced uas
+           INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                       ON uas.bbc_hid3 = coh.bbc_hid3
                         AND uas.follow_date >= coh.mindate
                         AND uas.follow_date <= coh.maxfeaturedate
@@ -69,11 +69,11 @@ SELECT
   ) preagg
 GROUP BY 1, 2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_my_progs TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_iplayer_my_progs TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_subscribes;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_subscribes
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_subscribes;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_subscribes
   distkey ( bbc_hid3 )
 AS
 SELECT
@@ -87,8 +87,8 @@ SELECT
            coh.fresh,
            follow_date,
            case when follow_date >= coh.lastweekstart then 1 else 0 end as followed_last_week
-    FROM central_insights_sandbox.ap_churn_uas_follows_reduced uas
-           INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+    FROM central_insights_sandbox.tp_churn_uas_follows_reduced uas
+           INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                       ON uas.bbc_hid3 = coh.bbc_hid3
                         AND uas.follow_date >= coh.mindate
                         AND uas.follow_date <= coh.maxfeaturedate
@@ -98,12 +98,12 @@ SELECT
   ) preagg
 GROUP BY 1, 2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_subscribes TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_subscribes TO GROUP central_insights;
 
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_bookmarks;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_bookmarks
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_bookmarks;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_bookmarks
   distkey ( bbc_hid3 )
 AS
 SELECT
@@ -117,8 +117,8 @@ SELECT
            coh.fresh,
            follow_date,
            case when follow_date >= coh.lastweekstart then 1 else 0 end as followed_last_week
-    FROM central_insights_sandbox.ap_churn_uas_follows_reduced uas
-           INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+    FROM central_insights_sandbox.tp_churn_uas_follows_reduced uas
+           INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                       ON uas.bbc_hid3 = coh.bbc_hid3
                         AND uas.follow_date >= coh.mindate
                         AND uas.follow_date <= coh.maxfeaturedate
@@ -128,21 +128,21 @@ SELECT
   ) preagg
 GROUP BY 1, 2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_bookmarks TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_bookmarks TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_uas_follows_reduced;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_uas_follows_reduced;
 
 /*
-select count(*) from central_insights_sandbox.ap_churn_iplayer_my_progs;
+select count(*) from central_insights_sandbox.tp_churn_iplayer_my_progs;
 --1,079,334
-select count(*) from central_insights_sandbox.ap_churn_sounds_subscribes;
+select count(*) from central_insights_sandbox.tp_churn_sounds_subscribes;
 --873,980
-select count(*) from central_insights_sandbox.ap_churn_sounds_bookmarks;
+select count(*) from central_insights_sandbox.tp_churn_sounds_bookmarks;
 --608,899
 
 select count(*) dupes from (
                              select bbc_hid3, count(*) n
-                             from central_insights_sandbox.ap_churn_iplayer_my_progs
+                             from central_insights_sandbox.tp_churn_iplayer_my_progs
                              group by 1
                              having n > 1
                            ) duplicates
@@ -150,7 +150,7 @@ select count(*) dupes from (
 
 select count(*) dupes from (
                              select bbc_hid3, count(*) n
-                             from central_insights_sandbox.ap_churn_sounds_subscribes
+                             from central_insights_sandbox.tp_churn_sounds_subscribes
                              group by 1
                              having n > 1
                            ) duplicates
@@ -158,7 +158,7 @@ select count(*) dupes from (
 
 select count(*) dupes from (
                              select bbc_hid3, count(*) n
-                             from central_insights_sandbox.ap_churn_sounds_bookmarks
+                             from central_insights_sandbox.tp_churn_sounds_bookmarks
                              group by 1
                              having n > 1
                            ) duplicates

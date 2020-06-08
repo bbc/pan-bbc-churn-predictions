@@ -1,6 +1,6 @@
 --hids and last weeks for each cohort
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_lastweek;
-CREATE TABLE central_insights_sandbox.ap_churn_lastweek AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_lastweek;
+CREATE TABLE central_insights_sandbox.tp_churn_lastweek AS
   SELECT audience_id as bbc_hid3,
          coh.fresh,
          destination,
@@ -8,7 +8,7 @@ CREATE TABLE central_insights_sandbox.ap_churn_lastweek AS
          version_id,
          count(distinct date_of_event) as events
   FROM audience.audience_activity_daily_summary_enriched aud
-  INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+  INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
     ON audience_id = coh.bbc_hid3
     AND aud.date_of_event >= coh.lastweekstart
     AND aud.date_of_event <= coh.maxfeaturedate
@@ -16,11 +16,11 @@ CREATE TABLE central_insights_sandbox.ap_churn_lastweek AS
     AND aud.playback_time_total >= 600
 GROUP BY 1,2,3,4,5
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_lastweek TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_lastweek TO GROUP central_insights;
 
 --series schedule to identify finales
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_schedule;
-CREATE TABLE central_insights_sandbox.ap_churn_schedule AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_schedule;
+CREATE TABLE central_insights_sandbox.tp_churn_schedule AS
   select episode_id,
        version_id                                                                   as version_id_first_broadcast,
        series_id,
@@ -57,10 +57,10 @@ from (select version_id,
      ) subs
 where rank = 1
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_schedule TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_schedule TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_series_finales;
-CREATE TABLE central_insights_sandbox.ap_churn_series_finales AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_series_finales;
+CREATE TABLE central_insights_sandbox.tp_churn_series_finales AS
   SELECT
     episode_id,
          series_id,
@@ -76,14 +76,14 @@ CREATE TABLE central_insights_sandbox.ap_churn_series_finales AS
           episode_id,
           series_id,
           episode_number
-      from central_insights_sandbox.ap_churn_schedule
+      from central_insights_sandbox.tp_churn_schedule
         group by 1, 2, 3
          ) sched
   ;
-GRANT ALL ON central_insights_sandbox.ap_churn_series_finales TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_series_finales TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_series;
-CREATE TABLE central_insights_sandbox.ap_churn_series AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_series;
+CREATE TABLE central_insights_sandbox.tp_churn_series AS
   SELECT bbc_hid3,
          fresh,
          lw.destination,
@@ -91,7 +91,7 @@ CREATE TABLE central_insights_sandbox.ap_churn_series AS
          count(distinct vmb.episode_id) as distinct_episodes,
          sum(sf.series_premiere) as series_premieres,
          sum(sf.series_finale) as series_finales
-  FROM central_insights_sandbox.ap_churn_lastweek lw
+  FROM central_insights_sandbox.tp_churn_lastweek lw
     LEFT JOIN (SELECT version_id,
                       episode_id,
                       case
@@ -129,15 +129,15 @@ CREATE TABLE central_insights_sandbox.ap_churn_series AS
       FROM prez.scv_vmb vmb
       ) vmb
       ON lw.version_id = vmb.version_id
-  LEFT JOIN central_insights_sandbox.ap_churn_series_finales sf
+  LEFT JOIN central_insights_sandbox.tp_churn_series_finales sf
     ON vmb.episode_id = sf.episode_id
   WHERE lw.destination_prod != 'radio'
 GROUP BY 1,2,3;
-GRANT ALL ON central_insights_sandbox.ap_churn_series TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_series TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_avg_repeats;
-CREATE TABLE central_insights_sandbox.ap_churn_avg_repeats AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_avg_repeats;
+CREATE TABLE central_insights_sandbox.tp_churn_avg_repeats AS
   SELECT bbc_hid3,
          fresh,
          destination,
@@ -148,18 +148,18 @@ FROM (
               destination,
               vmb.episode_id,
               sum(case when vmb.episode_id is not null then lw.events else 0 end)::float AS repeats
-       FROM central_insights_sandbox.ap_churn_lastweek lw
+       FROM central_insights_sandbox.tp_churn_lastweek lw
               LEFT JOIN prez.scv_vmb vmb
                         ON lw.version_id = vmb.version_id
        GROUP BY 1, 2, 3, 4
      ) subs
 GROUP BY 1,2,3
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_avg_repeats TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_avg_repeats TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_lw_features;
-CREATE TABLE central_insights_sandbox.ap_churn_lw_features
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_lw_features;
+CREATE TABLE central_insights_sandbox.tp_churn_lw_features
   distkey (bbc_hid3)
   sortkey (destination)
   AS
@@ -172,11 +172,11 @@ CREATE TABLE central_insights_sandbox.ap_churn_lw_features
          series.series_finales,
          case when series.series_finales > 0 then 1 else 0 end as watched_finale_flag,
          repeats.avg_episode_repeats
-  FROM central_insights_sandbox.ap_churn_series series
+  FROM central_insights_sandbox.tp_churn_series series
   LEFT JOIN
-    central_insights_sandbox.ap_churn_avg_repeats repeats
+    central_insights_sandbox.tp_churn_avg_repeats repeats
     ON series.bbc_hid3 = repeats.bbc_hid3
     and series.destination = repeats.destination
     and series.fresh = repeats.fresh
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_lw_features TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_lw_features TO GROUP central_insights;

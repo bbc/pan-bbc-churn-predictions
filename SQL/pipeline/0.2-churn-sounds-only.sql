@@ -2,8 +2,8 @@
 -- Collect active IDs by week
 -- Potentially switch to redshift enriched, performance concerns
 --hids and last weeks for each cohort
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_13w_raw;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_13w_raw AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_13w_raw;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_13w_raw AS
 SELECT audience_id                   as bbc_hid3,
        coh.fresh,
        destination,
@@ -24,7 +24,7 @@ SELECT audience_id                   as bbc_hid3,
        sum(playback_time_total)      as streaming_time,
        count(distinct case when playback_time_total >= 180 then date_of_event else null end) as events
 FROM audience.audience_activity_daily_summary_enriched aud
-       INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+       INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                   ON audience_id = coh.bbc_hid3
                     AND aud.date_of_event >= coh.mindate
                     AND aud.date_of_event <= coh.maxfeaturedate
@@ -32,14 +32,14 @@ WHERE destination in ('PS_SOUNDS')
   AND aud.playback_time_total > 0
 GROUP BY 1, 2, 3, 4, 5, 6
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_13w_raw TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_13w_raw TO GROUP central_insights;
 
 /*
 See Aileen's music/radio/podcasts snippet on github:
   https://github.com/bbc/sounds-analytics/blob/master/useful-snippets/music_radio_podcasts_definitions.SQL
 */
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix_tmp1;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_product_mix_tmp1
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix_tmp1;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_product_mix_tmp1
   AS
 SELECT bbc_hid3,
        fresh,
@@ -55,14 +55,14 @@ SELECT bbc_hid3,
 
        streaming_time::float as streaming_time,
        events::float as events
-FROM central_insights_sandbox.ap_churn_sounds_13w_raw a
+FROM central_insights_sandbox.tp_churn_sounds_13w_raw a
   LEFT JOIN prez.scv_vmb vmb
   ON a.version_id = vmb.version_id
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_product_mix_tmp1 TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_product_mix_tmp1 TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix_tmp2;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_product_mix_tmp2
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix_tmp2;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_product_mix_tmp2
   AS
 SELECT bbc_hid3,
        fresh,
@@ -122,13 +122,13 @@ SELECT bbc_hid3,
 
        streaming_time,
        events
-FROM central_insights_sandbox.ap_churn_sounds_product_mix_tmp1
+FROM central_insights_sandbox.tp_churn_sounds_product_mix_tmp1
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_product_mix_tmp2 TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_product_mix_tmp2 TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix_tmp3;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_product_mix_tmp3
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix_tmp3;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_product_mix_tmp3
   AS
 SELECT bbc_hid3,
        fresh,
@@ -162,13 +162,13 @@ SELECT bbc_hid3,
        sounds_ev_od_sounds_podcasts + sounds_ev_od_radio_podcasts as sounds_ev_od_podcasts,
        sounds_ev_od_sounds_mixes + sounds_ev_od_linear_mixes as sounds_ev_od_mixes
 
-FROM central_insights_sandbox.ap_churn_sounds_product_mix_tmp2
+FROM central_insights_sandbox.tp_churn_sounds_product_mix_tmp2
  GROUP BY 1, 2, 3
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_product_mix_tmp3 TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_product_mix_tmp3 TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_product_mix
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_product_mix
   distkey(bbc_hid3)
   AS 
 SELECT *,
@@ -264,11 +264,11 @@ SELECT *,
           end as sounds_ev_preferred_listening
 
 
-FROM central_insights_sandbox.ap_churn_sounds_product_mix_tmp3
+FROM central_insights_sandbox.tp_churn_sounds_product_mix_tmp3
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_product_mix TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_product_mix TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_13w_raw;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix_tmp1;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix_tmp2;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_product_mix_tmp3;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_13w_raw;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix_tmp1;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix_tmp2;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_product_mix_tmp3;

@@ -4,8 +4,8 @@
 
 -- Time
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_affinity_broad;
-CREATE TABLE central_insights_sandbox.ap_churn_affinity_broad AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_affinity_broad;
+CREATE TABLE central_insights_sandbox.tp_churn_affinity_broad AS
 SELECT
        bbc_hid3,
        destination,
@@ -31,19 +31,19 @@ SELECT
   (
 SELECT
        *,
-       datediff(week, week, (select maxweek from central_insights_sandbox.ap_churn_explore_vars)) as weeks_out,
+       datediff(week, week, (select maxweek from central_insights_sandbox.tp_churn_explore_vars)) as weeks_out,
        weeks_out - cohort as ew
-FROM central_insights_sandbox.ap_churn_weekly_active_ids ids
+FROM central_insights_sandbox.tp_churn_weekly_active_ids ids
     where destination != 'radio'
   ) ids_ew
 WHERE ew <= 14
 GROUP BY 1, 2, 3, 4
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_affinity_broad TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_affinity_broad TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_genre_schedule;
-CREATE TABLE central_insights_sandbox.ap_churn_genre_schedule AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_genre_schedule;
+CREATE TABLE central_insights_sandbox.tp_churn_genre_schedule AS
 SELECT
       case when media_type = 'video' then 'iplayer'
            when media_type = 'audio' then 'sounds'
@@ -108,10 +108,10 @@ FROM
     ) sched_week
 GROUP BY 1, 2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_genre_schedule TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_genre_schedule TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_genre_schedule_scaled;
-CREATE TABLE central_insights_sandbox.ap_churn_genre_schedule_scaled AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_genre_schedule_scaled;
+CREATE TABLE central_insights_sandbox.tp_churn_genre_schedule_scaled AS
 SELECT
        destination,
        week,
@@ -154,14 +154,14 @@ FROM (
               avg(releases_sport) over (partition by destination rows between 12 preceding and current row )     as avg_releases_sport,
               avg(releases_weather) over (partition by destination rows between 12 preceding and current row )   as avg_releases_weather,
               avg(releases_other) over (partition by destination rows between 12 preceding and current row )     as avg_releases_other
-       FROM central_insights_sandbox.ap_churn_genre_schedule
+       FROM central_insights_sandbox.tp_churn_genre_schedule
       WHERE week >= '2017-01-01'
      ) wind
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_genre_schedule_scaled TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_genre_schedule_scaled TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_affinity_broad_share;
-CREATE TABLE central_insights_sandbox.ap_churn_affinity_broad_share AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_affinity_broad_share;
+CREATE TABLE central_insights_sandbox.tp_churn_affinity_broad_share AS
 SELECT broad.*,
        case when broad.streaming_time > 0 then genre_st_comedy / streaming_time else 0 end    as genre_share_comedy,
        case when broad.streaming_time > 0 then genre_st_drama / streaming_time else 0 end     as genre_share_drama,
@@ -194,14 +194,14 @@ SELECT broad.*,
        genre_watch_learning + genre_watch_music + genre_watch_news + genre_watch_religion +
        genre_watch_sport + genre_watch_weather + genre_watch_other as genre_distinct_count
 
-FROM central_insights_sandbox.ap_churn_affinity_broad broad
+FROM central_insights_sandbox.tp_churn_affinity_broad broad
 ;
 
-GRANT ALL ON central_insights_sandbox.ap_churn_affinity_broad_share TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_affinity_broad_share TO GROUP central_insights;
 
 -- Attach schedule for range over the target week - AKA new shows coming up in the potential churn window
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_genre_features; --57291276
-CREATE TABLE central_insights_sandbox.ap_churn_genre_features
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_genre_features; --57291276
+CREATE TABLE central_insights_sandbox.tp_churn_genre_features
   distkey (bbc_hid3)
   sortkey (destination)
   AS
@@ -251,18 +251,18 @@ SELECT
        sched_match_index_factual + sched_match_index_learning + sched_match_index_music + sched_match_index_news +
        sched_match_index_religion + sched_match_index_sport + sched_match_index_weather as sched_match_index
 
-       FROM central_insights_sandbox.ap_churn_affinity_broad_share broad
-        LEFT JOIN central_insights_sandbox.ap_churn_cohort_dates coh
+       FROM central_insights_sandbox.tp_churn_affinity_broad_share broad
+        LEFT JOIN central_insights_sandbox.tp_churn_cohort_dates coh
           ON broad.cohort = coh.cohort
-        LEFT JOIN central_insights_sandbox.ap_churn_genre_schedule sched
+        LEFT JOIN central_insights_sandbox.tp_churn_genre_schedule sched
           ON broad.destination = sched.destination
           AND sched.week = date_trunc('week', maxDate)
-        LEFT JOIN central_insights_sandbox.ap_churn_genre_schedule_scaled scaled
+        LEFT JOIN central_insights_sandbox.tp_churn_genre_schedule_scaled scaled
           ON broad.destination = scaled.destination
           AND scaled.week = date_trunc('week', maxDate)
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_genre_features TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_genre_features TO GROUP central_insights;
 
-select * from central_insights_sandbox.ap_churn_affinity_broad
+select * from central_insights_sandbox.tp_churn_affinity_broad
 where bbc_hid3 = '1Iye6H20WXY5o9rJFkqyZbOCJBWqmiqeJqEQ3P5kxS8'
 limit 100;

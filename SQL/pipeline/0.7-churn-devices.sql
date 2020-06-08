@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_devices_13w_raw;
-CREATE TABLE central_insights_sandbox.ap_churn_devices_13w_raw AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_devices_13w_raw;
+CREATE TABLE central_insights_sandbox.tp_churn_devices_13w_raw AS
 SELECT audience_id                   as bbc_hid3,
        destination,
        fresh,
@@ -16,7 +16,7 @@ SELECT audience_id                   as bbc_hid3,
        sum(playback_time_total)     as streaming_time,
        count(distinct date_of_event) as events
 FROM audience.audience_activity_daily_summary_enriched aud
-       INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+       INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                   ON audience_id = coh.bbc_hid3
                     AND aud.date_of_event >= coh.mindate
                     AND aud.date_of_event <= coh.maxfeaturedate
@@ -24,10 +24,10 @@ WHERE destination in ('PS_IPLAYER', 'PS_SOUNDS')
   AND aud.playback_time_total >= 180
 GROUP BY 1, 2, 3, 4,5 ,6
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_devices_13w_raw TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_devices_13w_raw TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_devices_tmp1;
-CREATE TABLE central_insights_sandbox.ap_churn_devices_tmp1
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_devices_tmp1;
+CREATE TABLE central_insights_sandbox.tp_churn_devices_tmp1
   AS
 SELECT bbc_hid3,
        fresh,
@@ -118,14 +118,14 @@ SELECT bbc_hid3,
          + iplayer_ev_dev_smart_tv + iplayer_ev_dev_other_web as iplayer_events
        -- ##################
 
-FROM central_insights_sandbox.ap_churn_devices_13w_raw
+FROM central_insights_sandbox.tp_churn_devices_13w_raw
 WHERE destination_prod != 'radio'
 GROUP BY 1, 2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_devices_tmp1 TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_devices_tmp1 TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_devices;
-CREATE TABLE central_insights_sandbox.ap_churn_devices
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_devices;
+CREATE TABLE central_insights_sandbox.tp_churn_devices
   distkey(bbc_hid3)
   AS
 SELECT bbc_hid3,
@@ -235,11 +235,11 @@ SELECT bbc_hid3,
               then 'smart-tv'
            else 'other-web'
       end as iplayer_ev_preferred_device
-FROM central_insights_sandbox.ap_churn_devices_tmp1
+FROM central_insights_sandbox.tp_churn_devices_tmp1
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_devices TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_devices TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_devices_raw;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_devices_tmp1;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_devices_raw;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_devices_tmp1;
 
 

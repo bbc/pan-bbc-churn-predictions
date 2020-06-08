@@ -5,8 +5,8 @@ genres and master brands.
 */
 
 -- Sorting out content_ids first so we can match to Dan's itemised matrix
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_episode_content_ids;
-CREATE TABLE central_insights_sandbox.ap_churn_episode_content_ids
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_episode_content_ids;
+CREATE TABLE central_insights_sandbox.tp_churn_episode_content_ids
   distkey (content_id)
   AS
 SELECT DISTINCT episode_id,
@@ -21,11 +21,11 @@ SELECT DISTINCT episode_id,
               ) map
 where episode_id != 'null'
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_episode_content_ids TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_episode_content_ids TO GROUP central_insights;
 
 -- On to selecting genres and master brands based on frequency
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_content_genres_masterbrands;
-CREATE TABLE central_insights_sandbox.ap_churn_content_genres_masterbrands
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_content_genres_masterbrands;
+CREATE TABLE central_insights_sandbox.tp_churn_content_genres_masterbrands
   AS
 SELECT
 --   g.episode_id,
@@ -77,7 +77,7 @@ FROM
                   split_part(pips_genre_level_1_names, ';', 1) as genre,
                   count(*) as n
             FROM prez.scv_vmb vmb
-           LEFT JOIN central_insights_sandbox.ap_churn_episode_content_ids c_ids
+           LEFT JOIN central_insights_sandbox.tp_churn_episode_content_ids c_ids
                 ON vmb.episode_id = c_ids.episode_id
           GROUP BY 1,2,3
              ) g_n
@@ -103,7 +103,7 @@ INNER JOIN
                   master_brand_name as masterbrand,
                   count(*) as n
             FROM prez.scv_vmb vmb
-           LEFT JOIN central_insights_sandbox.ap_churn_episode_content_ids c_ids
+           LEFT JOIN central_insights_sandbox.tp_churn_episode_content_ids c_ids
                 ON vmb.episode_id = c_ids.episode_id
             GROUP BY 1,2,3
              ) mb_n
@@ -112,12 +112,12 @@ INNER JOIN
     ) mb
 --ON g.episode_id = mb.episode_id
 ON g.content_id = mb.content_id
--- LEFT JOIN central_insights_sandbox.ap_churn_episode_content_ids c_ids
+-- LEFT JOIN central_insights_sandbox.tp_churn_episode_content_ids c_ids
 -- ON g.episode_id = c_ids.episode_id
 -- LEFT JOIN  central_insights_sandbox.dh_sounds_item_matrix_enriched item_matrix
 -- on c_ids.content_id = item_matrix.content_id
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_content_genres_masterbrands TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_content_genres_masterbrands TO GROUP central_insights;
 
 -- select count(*) from prez.scv_vmb;
 --5.9m
@@ -140,8 +140,8 @@ provided by Dan Hill's recommender system to represent specific content in a num
 
 
 -- SOUNDS
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_sounds_activating_users;
-CREATE TABLE central_insights_sandbox.ap_churn_sounds_activating_users
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_sounds_activating_users;
+CREATE TABLE central_insights_sandbox.tp_churn_sounds_activating_users
   distkey(bbc_hid3)
  AS
 SELECT a.bbc_hid3,
@@ -192,24 +192,24 @@ FROM (
                          rows between unbounded preceding and unbounded following
                          ) as activation_episode_id
                        --       datediff('week', act.week_beginning, coh.lastweekstart) + 1 as weeks_since_activation
-       FROM central_insights_sandbox.ap_churn_cohorts coh
+       FROM central_insights_sandbox.tp_churn_cohorts coh
               LEFT JOIN radio1_sandbox.sounds_activations_preagg act
                         ON coh.bbc_hid3 = act.bbc_hid3
                           AND act.week_beginning <= coh.lastweekstart
      ) a
-LEFT JOIN central_insights_sandbox.ap_churn_episode_content_ids c_ids
+LEFT JOIN central_insights_sandbox.tp_churn_episode_content_ids c_ids
   ON a.activation_episode_id = c_ids.episode_id
-LEFT JOIN central_insights_sandbox.ap_churn_content_genres_masterbrands b
+LEFT JOIN central_insights_sandbox.tp_churn_content_genres_masterbrands b
   ON c_ids.content_id = b.content_id
 LEFT JOIN  central_insights_sandbox.dh_sounds_item_matrix_enriched item_matrix
   on b.content_id = item_matrix.content_id
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_sounds_activating_users TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_sounds_activating_users TO GROUP central_insights;
 --25,155,402
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_iplayer_activating_users;
-CREATE TABLE central_insights_sandbox.ap_churn_iplayer_activating_users
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_iplayer_activating_users;
+CREATE TABLE central_insights_sandbox.tp_churn_iplayer_activating_users
   distkey(bbc_hid3)
   AS
 SELECT a.bbc_hid3,
@@ -244,21 +244,21 @@ FROM (
                        partition by coh.bbc_hid3 order by week_beginning desc
                        rows between unbounded preceding and unbounded following
                        ) as activation_version_id
-      FROM central_insights_sandbox.ap_churn_cohorts coh
+      FROM central_insights_sandbox.tp_churn_cohorts coh
               LEFT JOIN central_insights_sandbox.iplayer_activations_postmigration_preagg act
                     ON coh.bbc_hid3 = act.audience_id
                     AND act.week_beginning <= coh.lastweekstart
        ) a
 LEFT JOIN prez.scv_vmb vmb
   ON a.activation_version_id = vmb.version_id
-LEFT JOIN central_insights_sandbox.ap_churn_episode_content_ids c_ids
+LEFT JOIN central_insights_sandbox.tp_churn_episode_content_ids c_ids
   ON vmb.episode_id = c_ids.episode_id
-LEFT JOIN central_insights_sandbox.ap_churn_content_genres_masterbrands b
+LEFT JOIN central_insights_sandbox.tp_churn_content_genres_masterbrands b
   ON c_ids.content_id = b.content_id
 LEFT JOIN  central_insights_sandbox.dh_iplayer_item_matrix_enriched item_matrix
   on b.content_id = item_matrix.content_id
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_iplayer_activating_users TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_iplayer_activating_users TO GROUP central_insights;
 
 /*
 ###########################
@@ -275,8 +275,8 @@ provided by Dan Hill's recommender system to represent specific content in a num
 
 -- User data
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_favourite_content_raw;
-CREATE TABLE central_insights_sandbox.ap_churn_favourite_content_raw AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_favourite_content_raw;
+CREATE TABLE central_insights_sandbox.tp_churn_favourite_content_raw AS
 SELECT audience_id                   as bbc_hid3,
        destination,
        coh.fresh,
@@ -289,7 +289,7 @@ SELECT audience_id                   as bbc_hid3,
        sum(playback_time_total)     as streaming_time,
        count(distinct date_of_event) as events
 FROM audience.audience_activity_daily_summary_enriched aud
-       INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+       INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                   ON audience_id = coh.bbc_hid3
                     AND aud.date_of_event >= coh.mindate
                     AND aud.date_of_event <= coh.maxfeaturedate
@@ -297,11 +297,11 @@ WHERE destination in ('PS_IPLAYER', 'PS_SOUNDS')
   AND aud.playback_time_total >= 180
 GROUP BY 1, 2, 3, 4, 5
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_favourite_content_raw TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_favourite_content_raw TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_favourite_content_sounds;
-CREATE TABLE central_insights_sandbox.ap_churn_favourite_content_sounds
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_favourite_content_sounds;
+CREATE TABLE central_insights_sandbox.tp_churn_favourite_content_sounds
   distkey(bbc_hid3)
   AS
 SELECT
@@ -351,21 +351,21 @@ FROM
                     PARTITION BY bbc_hid3
                     ORDER BY events desc
                     ) rn
-           FROM central_insights_sandbox.ap_churn_favourite_content_raw
+           FROM central_insights_sandbox.tp_churn_favourite_content_raw
            WHERE destination = 'PS_SOUNDS'
          ) subs
     WHERE rn = 1
   ) fav
-LEFT JOIN central_insights_sandbox.ap_churn_content_genres_masterbrands cgmb
+LEFT JOIN central_insights_sandbox.tp_churn_content_genres_masterbrands cgmb
   ON fav.content_id = cgmb.content_id
 LEFT JOIN central_insights_sandbox.dh_sounds_item_matrix_enriched sounds_item_matrix
   ON fav.content_id = sounds_item_matrix.content_id
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_favourite_content_sounds TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_favourite_content_sounds TO GROUP central_insights;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_favourite_content_iplayer;
-CREATE TABLE central_insights_sandbox.ap_churn_favourite_content_iplayer
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_favourite_content_iplayer;
+CREATE TABLE central_insights_sandbox.tp_churn_favourite_content_iplayer
   distkey(bbc_hid3)
   AS
 SELECT
@@ -405,19 +405,19 @@ FROM
                     PARTITION BY bbc_hid3
                     ORDER BY events desc
                     ) rn
-           FROM central_insights_sandbox.ap_churn_favourite_content_raw
+           FROM central_insights_sandbox.tp_churn_favourite_content_raw
            WHERE destination = 'PS_IPLAYER'
                  and content_id is not null
          ) subs
     WHERE rn = 1
   ) fav
-LEFT JOIN central_insights_sandbox.ap_churn_content_genres_masterbrands cgmb
+LEFT JOIN central_insights_sandbox.tp_churn_content_genres_masterbrands cgmb
   ON fav.content_id = cgmb.content_id
 LEFT JOIN central_insights_sandbox.dh_iplayer_item_matrix_enriched iplayer_item_matrix
   ON fav.content_id = iplayer_item_matrix.content_id
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_favourite_content_iplayer TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_favourite_content_iplayer TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_episode_content_ids;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_content_genres_masterbrands;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_favourite_content_raw;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_episode_content_ids;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_content_genres_masterbrands;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_favourite_content_raw;

@@ -17,8 +17,8 @@ TBA
 -- Set up local vars
 BEGIN;
 SET LOCAL search_path = 'central_insights_sandbox';
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_explore_vars;
-CREATE TABLE central_insights_sandbox.ap_churn_explore_vars AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_explore_vars;
+CREATE TABLE central_insights_sandbox.tp_churn_explore_vars AS
   SELECT
          '2020-02-23'::DATE AS maxDate, --(last Sunday)
          dateadd('days',-((n_cohorts+17)*7),maxDate) as minDate,
@@ -28,18 +28,18 @@ CREATE TABLE central_insights_sandbox.ap_churn_explore_vars AS
          ) n_cohorts
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_explore_vars TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_explore_vars TO GROUP central_insights;
 
 -- Collect active IDs by week
 -- Potentially switch to redshift enriched, performance concerns
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_weekly_active_ids;
-CREATE TABLE central_insights_sandbox.ap_churn_weekly_active_ids AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids;
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_ids AS
   SELECT
          audience_id as bbc_hid3,
 --          destination,
          central_insights.udf_destination_prod(destination, app_name, page_name) as destination,
-         --cast(ceil(random() * ((select n_cohorts from central_insights_sandbox.ap_churn_explore_vars)))-1 as int) as cohort,
+         --cast(ceil(random() * ((select n_cohorts from central_insights_sandbox.tp_churn_explore_vars)))-1 as int) as cohort,
          date_trunc('week', date_of_event) as week,
          count(*) as events,
          sum(playback_time_total)::float as streaming_time,
@@ -61,17 +61,17 @@ CREATE TABLE central_insights_sandbox.ap_churn_weekly_active_ids AS
           + genre_st_learning + genre_st_music + genre_st_news + genre_st_religion + genre_st_sport + genre_st_weather) as genre_st_other
   FROM audience.audience_activity_daily_summary_enriched
   WHERE destination in ('PS_IPLAYER', 'PS_SOUNDS')
-    AND date_of_event <= (select maxDate from central_insights_sandbox.ap_churn_explore_vars)
-    AND date_of_event >= (select minDate from central_insights_sandbox.ap_churn_explore_vars)
+    AND date_of_event <= (select maxDate from central_insights_sandbox.tp_churn_explore_vars)
+    AND date_of_event >= (select minDate from central_insights_sandbox.tp_churn_explore_vars)
     --AND cohort >= 0
   GROUP BY 1, 2, 3
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_weekly_active_ids TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_weekly_active_ids TO GROUP central_insights;
 
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_cohorts;
-CREATE TABLE central_insights_sandbox.ap_churn_cohorts
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_cohorts;
+CREATE TABLE central_insights_sandbox.tp_churn_cohorts
   DISTKEY ( bbc_hid3 )  AS
   SELECT bbc_hid3,
          cohort,
@@ -90,42 +90,42 @@ CREATE TABLE central_insights_sandbox.ap_churn_cohorts
         FROM (
                SELECT bbc_hid3,
                       cast(ceil(random() * ((SELECT n_cohorts
-                                             FROM central_insights_sandbox.ap_churn_explore_vars))) -
+                                             FROM central_insights_sandbox.tp_churn_explore_vars))) -
                            1 AS INT) AS cohort
                FROM (SELECT DISTINCT bbc_hid3
-                     FROM central_insights_sandbox.ap_churn_weekly_active_ids) ids
+                     FROM central_insights_sandbox.tp_churn_weekly_active_ids) ids
                --          WHERE cohort >= 0
              ) a
         UNION
         SELECT DISTINCT bbc_hid3,
                -2 as cohort,
                1 as fresh
-        FROM central_insights_sandbox.ap_churn_weekly_active_ids
+        FROM central_insights_sandbox.tp_churn_weekly_active_ids
        ) assign_cohort
-  CROSS JOIN central_insights_sandbox.ap_churn_explore_vars vars
+  CROSS JOIN central_insights_sandbox.tp_churn_explore_vars vars
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_cohorts TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_cohorts TO GROUP central_insights;
 
 -- adding cohorts to weekly activity table
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_weekly_active_ids_deleteme;
-ALTER TABLE central_insights_sandbox.ap_churn_weekly_active_ids RENAME TO ap_churn_weekly_active_ids_deleteme;
--- DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_weekly_active_ids;
-CREATE TABLE central_insights_sandbox.ap_churn_weekly_active_ids AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids_deleteme;
+ALTER TABLE central_insights_sandbox.tp_churn_weekly_active_ids RENAME TO tp_churn_weekly_active_ids_deleteme;
+-- DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids;
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_ids AS
   SELECT ids.*,
          coh.cohort,
          coh.fresh
-  FROM central_insights_sandbox.ap_churn_weekly_active_ids_deleteme ids
-    INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+  FROM central_insights_sandbox.tp_churn_weekly_active_ids_deleteme ids
+    INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
       ON ids.bbc_hid3 = coh.bbc_hid3
 --   WHERE coh.cohort >= -2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_weekly_active_ids TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_weekly_active_ids TO GROUP central_insights;
 
 
 -- lookup of the feature date ranges for each cohort
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_cohort_dates;
-CREATE TABLE central_insights_sandbox.ap_churn_cohort_dates as
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_cohort_dates;
+CREATE TABLE central_insights_sandbox.tp_churn_cohort_dates as
 SELECT DISTINCT
        cohort,
        minDate,
@@ -134,27 +134,27 @@ SELECT DISTINCT
        date_trunc('week', maxDate) as maxWeek,
        lastweekstart
 FROM
-central_insights_sandbox.ap_churn_cohorts;
+central_insights_sandbox.tp_churn_cohorts;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_cohort_dates TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_cohort_dates TO GROUP central_insights;
 
 
 -- Add most recent week to variable set
 BEGIN;
-CREATE TABLE central_insights_sandbox.ap_churn_explore_vars_1 AS
+CREATE TABLE central_insights_sandbox.tp_churn_explore_vars_1 AS
   SELECT *,
-         (select max(week) from central_insights_sandbox.ap_churn_weekly_active_ids WHERE cohort >= 0) as maxWeek
-  FROM central_insights_sandbox.ap_churn_explore_vars
+         (select max(week) from central_insights_sandbox.tp_churn_weekly_active_ids WHERE cohort >= 0) as maxWeek
+  FROM central_insights_sandbox.tp_churn_explore_vars
 ;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_explore_vars;
-ALTER TABLE central_insights_sandbox.ap_churn_explore_vars_1 RENAME TO ap_churn_explore_vars;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_explore_vars;
+ALTER TABLE central_insights_sandbox.tp_churn_explore_vars_1 RENAME TO tp_churn_explore_vars;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_explore_vars TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_explore_vars TO GROUP central_insights;
 
 -- Pivot to create 15 weeks of events as columns
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_weekly_active_pivot;
-CREATE TABLE central_insights_sandbox.ap_churn_weekly_active_pivot
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_pivot;
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_pivot
   distkey (bbc_hid3)
   sortkey (destination)
   AS
@@ -200,19 +200,19 @@ CREATE TABLE central_insights_sandbox.ap_churn_weekly_active_pivot
     nvl(sum(case when weeks_out - cohort = 14 then events else null end),0) as ew_14
   FROM (
          SELECT *,
-                datediff(week, week, (select maxweek from central_insights_sandbox.ap_churn_explore_vars)) as weeks_out
-         FROM central_insights_sandbox.ap_churn_weekly_active_ids
+                datediff(week, week, (select maxweek from central_insights_sandbox.tp_churn_explore_vars)) as weeks_out
+         FROM central_insights_sandbox.tp_churn_weekly_active_ids
          where destination != 'radio' --removing iplayer radio from sounds
        ) A
   GROUP BY 1, 2, 3, 4
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_weekly_active_pivot TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_weekly_active_pivot TO GROUP central_insights;
 
 -- Create a 1/0 flag table for activity
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_weekly_active;
-CREATE TABLE central_insights_sandbox.ap_churn_weekly_active AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active;
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active AS
   SELECT
     *,
     case when ew_0 > 0 then 1 else 0 end as aw_0,
@@ -230,15 +230,15 @@ CREATE TABLE central_insights_sandbox.ap_churn_weekly_active AS
     case when ew_12 > 0 then 1 else 0 end as aw_12,
     case when ew_13 > 0 then 1 else 0 end as aw_13,
     case when ew_14 > 0 then 1 else 0 end as aw_14
-  FROM central_insights_sandbox.ap_churn_weekly_active_pivot
+  FROM central_insights_sandbox.tp_churn_weekly_active_pivot
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_weekly_active TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_weekly_active TO GROUP central_insights;
 
 -- Calculate linear regression on 13 weeks, excluding current (scoring) week and next (prediction) week
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_13week_lin_reg;
-CREATE TABLE central_insights_sandbox.ap_churn_13week_lin_reg
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_13week_lin_reg;
+CREATE TABLE central_insights_sandbox.tp_churn_13week_lin_reg
   distkey (bbc_hid3)
   sortkey (destination)
   AS
@@ -287,16 +287,16 @@ CREATE TABLE central_insights_sandbox.ap_churn_13week_lin_reg
          /* x intercept */
          case when beta_hat < 0 then -(alpha_hat/beta_hat) else null end as x_intercept
 
-  FROM central_insights_sandbox.ap_churn_weekly_active_pivot
+  FROM central_insights_sandbox.tp_churn_weekly_active_pivot
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_13week_lin_reg TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_13week_lin_reg TO GROUP central_insights;
 
 
 --"Pivot" over destination
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_13week_lin_reg_pivot;
-CREATE TABLE central_insights_sandbox.ap_churn_13week_lin_reg_pivot AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_13week_lin_reg_pivot;
+CREATE TABLE central_insights_sandbox.tp_churn_13week_lin_reg_pivot AS
 SELECT
   bbc_hid3,
   fresh,
@@ -308,15 +308,15 @@ SELECT
   SUM(case when destination = 'sounds' then alpha_hat else NULL end) as sounds_13w_yintercept,
   SUM(case when destination = 'sounds' then x_intercept else NULL end) as sounds_13w_xintercept,
   case when sounds_13w_xintercept is not null then 1 else 0 end as sounds_lin_reg_churn_flag
-  from central_insights_sandbox.ap_churn_13week_lin_reg
+  from central_insights_sandbox.tp_churn_13week_lin_reg
 group by 1, 2
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_13week_lin_reg_pivot TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_13week_lin_reg_pivot TO GROUP central_insights;
 
 -- Create a target set to train on
 BEGIN;
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_target;
-CREATE TABLE central_insights_sandbox.ap_churn_target
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_target;
+CREATE TABLE central_insights_sandbox.tp_churn_target
   distkey (bbc_hid3)
   sortkey (destination)
   AS
@@ -331,12 +331,12 @@ CREATE TABLE central_insights_sandbox.ap_churn_target
          case when fresh = 1 then NULL else 1-aw_0 end as target_churn_next_week,
          case when aw_2 = 1 and streaming_time_13w > 180 then 1 else 0 end as active_last_week,
          case when cast(random() * 5 as int) = 4 then 0 else 1 end as train
-  FROM central_insights_sandbox.ap_churn_weekly_active activity
+  FROM central_insights_sandbox.tp_churn_weekly_active activity
   LEFT JOIN
-    central_insights_sandbox.ap_churn_cohort_dates coh
+    central_insights_sandbox.tp_churn_cohort_dates coh
     on activity.cohort = coh.cohort
 ;
 COMMIT;
-GRANT ALL ON central_insights_sandbox.ap_churn_target TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_target TO GROUP central_insights;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_weekly_active_ids_deleteme;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids_deleteme;

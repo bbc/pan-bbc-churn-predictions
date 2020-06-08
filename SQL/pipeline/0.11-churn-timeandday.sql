@@ -1,6 +1,6 @@
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_timeandday_raw;
-CREATE TABLE central_insights_sandbox.ap_churn_timeandday_raw AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_timeandday_raw;
+CREATE TABLE central_insights_sandbox.tp_churn_timeandday_raw AS
   SELECT audience_id,
          coh.fresh,
          destination,
@@ -23,7 +23,7 @@ CREATE TABLE central_insights_sandbox.ap_churn_timeandday_raw AS
          sum(case when date_part('dow', date_of_event) = 0 then playback_time_total else 0 end) as dow_sunday
 
   FROM audience.audience_activity_daily_summary_enriched aud
-       INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+       INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                   ON audience_id = coh.bbc_hid3
                     AND aud.date_of_event >= coh.mindate
                     AND aud.date_of_event <= coh.maxfeaturedate
@@ -31,8 +31,8 @@ WHERE destination in ('PS_IPLAYER', 'PS_SOUNDS')
 GROUP BY 1, 2, 3, 4
 ;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_timeandday;
-CREATE TABLE central_insights_sandbox.ap_churn_timeandday AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_timeandday;
+CREATE TABLE central_insights_sandbox.tp_churn_timeandday AS
   SELECT audience_id as bbc_hid3,
          fresh,
          destination,
@@ -53,5 +53,5 @@ CREATE TABLE central_insights_sandbox.ap_churn_timeandday AS
          case when playback_total = 0 then 0 else dow_saturday::float /playback_total end as dow_saturday,
          case when playback_total = 0 then 0 else dow_sunday::float /playback_total end as dow_sunday
 
-FROM central_insights_sandbox.ap_churn_timeandday_raw
+FROM central_insights_sandbox.tp_churn_timeandday_raw
 ;

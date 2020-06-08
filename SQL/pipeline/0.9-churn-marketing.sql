@@ -1,5 +1,5 @@
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_newsletter_follows_reduced;
-CREATE TABLE central_insights_sandbox.ap_churn_newsletter_follows_reduced
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_newsletter_follows_reduced;
+CREATE TABLE central_insights_sandbox.tp_churn_newsletter_follows_reduced
   distkey(bbc_hid3)
   AS
 SELECT hashedidentity as bbc_hid3,
@@ -14,8 +14,8 @@ FROM prez.uasview
 ;
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_mkt_optin;
-CREATE TABLE central_insights_sandbox.ap_churn_mkt_optin
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_mkt_optin;
+CREATE TABLE central_insights_sandbox.tp_churn_mkt_optin
   AS
 SELECT DISTINCT
     bbc_hid3,
@@ -38,9 +38,9 @@ from
                   coh.fresh,
                   servertime, action
   FROM
-  central_insights_sandbox.ap_churn_cohorts coh
+  central_insights_sandbox.tp_churn_cohorts coh
   LEFT JOIN
-  central_insights_sandbox.ap_churn_newsletter_follows_reduced uas
+  central_insights_sandbox.tp_churn_newsletter_follows_reduced uas
   ON uas.bbc_hid3 = coh.bbc_hid3
   WHERE action_date <= coh.maxFeatureDate
     ) follows
@@ -49,8 +49,8 @@ from
 
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_mkt_activity;
-CREATE TABLE central_insights_sandbox.ap_churn_mkt_activity
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_mkt_activity;
+CREATE TABLE central_insights_sandbox.tp_churn_mkt_activity
   distkey (bbc_hid3)
   AS
 SELECT nvl(opens.bbc_hid3, clicks.bbc_hid3) as bbc_hid3,
@@ -65,7 +65,7 @@ FROM (
               count(distinct sendid)                                                   as mkt_email_opens_13w,
               count(distinct case when eventdatetime >= lastweekstart then sendid end) as mkt_email_opens_lw
        FROM research_measurement_data.rmd_salesforce_opens_src sf
-              INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+              INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                          ON subscriberkey = coh.bbc_hid3
                            AND sf.eventdatetime >= coh.mindate
                            AND sf.eventdatetime <= coh.maxfeaturedate
@@ -78,7 +78,7 @@ FULL OUTER JOIN
               count(distinct sendid)                                                   as mkt_email_clicks_13w,
               count(distinct case when eventdatetime >= lastweekstart then sendid end) as mkt_email_clicks_lw
        FROM research_measurement_data.rmd_salesforce_clicks_src sf
-              INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+              INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
                          ON subscriberkey = coh.bbc_hid3
                            AND sf.eventdatetime >= coh.mindate
                            AND sf.eventdatetime <= coh.maxfeaturedate
@@ -87,7 +87,7 @@ FULL OUTER JOIN
 ON opens.bbc_hid3 = clicks.bbc_hid3
 AND opens.fresh = clicks.fresh
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_mkt_activity TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_mkt_activity TO GROUP central_insights;
 
--- DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_newsletter_follows_reduced;
+-- DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_newsletter_follows_reduced;
 

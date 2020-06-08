@@ -1,5 +1,5 @@
---  DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_freq_segs;
--- CREATE TABLE central_insights_sandbox.ap_churn_freq_segs
+--  DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_freq_segs;
+-- CREATE TABLE central_insights_sandbox.tp_churn_freq_segs
 --     distkey (bbc_hid3)
 --     sortkey (destination)
 -- AS
@@ -10,8 +10,8 @@
 --   WHERE segmentation in ('sounds', 'iplayer', 'PanBBC')
 -- ;
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_last_seg;
-CREATE TABLE central_insights_sandbox.ap_churn_last_seg AS
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_last_seg;
+CREATE TABLE central_insights_sandbox.tp_churn_last_seg AS
 SELECT coh.bbc_hid3,
        coh.fresh,
        nvl(seg_iplayer.segvalue, 'X. Inactive') as freq_seg_iplayer,
@@ -22,7 +22,7 @@ SELECT coh.bbc_hid3,
        nvl(seg_cbeebies.segvalue, 'X. Inactive') as freq_seg_cbeebies,
        nvl(seg_weather.segvalue, 'X. Inactive') as freq_seg_weather,
        nvl(seg_panbbc.segvalue, 'X. Inactive') as freq_seg_panbbc
-FROM central_insights_sandbox.ap_churn_cohorts coh
+FROM central_insights_sandbox.tp_churn_cohorts coh
 
   --iplayer
   LEFT JOIN central_insights.sg10026_info_individual_alltime seg_iplayer
@@ -72,7 +72,7 @@ FROM central_insights_sandbox.ap_churn_cohorts coh
   AND lower(seg_panbbc.product) = 'panbbc'
   AND coh.lastweekstart = date_trunc('week', seg_panbbc.date_of_segmentation)
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_last_seg TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_last_seg TO GROUP central_insights;
 
 
 

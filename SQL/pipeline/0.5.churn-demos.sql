@@ -1,7 +1,7 @@
 
 
-DROP TABLE IF EXISTS central_insights_sandbox.ap_churn_demos;
-CREATE TABLE central_insights_sandbox.ap_churn_demos
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_demos;
+CREATE TABLE central_insights_sandbox.tp_churn_demos
   distkey (bbc_hid3)
   AS
   SELECT prof.bbc_hid3,
@@ -29,7 +29,7 @@ CREATE TABLE central_insights_sandbox.ap_churn_demos
          ext.acorn_group_description,
          ext.acorn_category_description
 FROM prez.id_profile prof
-  INNER JOIN central_insights_sandbox.ap_churn_cohorts coh
+  INNER JOIN central_insights_sandbox.tp_churn_cohorts coh
   ON prof.bbc_hid3 = coh.bbc_hid3
   LEFT JOIN prez.profile_extension ext
   ON prof.bbc_hid3 = ext.bbc_hid3
@@ -37,7 +37,7 @@ FROM prez.id_profile prof
   ON prof.bbc_hid3 = gp.audience_id
   LEFT JOIN central_insights_sandbox.age1634_predictions ap
   ON prof.bbc_hid3 = ap.audience_id
-  LEFT JOIN central_insights_sandbox.ap_churn_cohort_dates coh_dates
+  LEFT JOIN central_insights_sandbox.tp_churn_cohort_dates coh_dates
   ON coh.cohort = coh_dates.cohort
     --remove dupes
 LEFT JOIN
@@ -51,4 +51,4 @@ LEFT JOIN
 WHERE dupes.bbc_hid3 is NULL
 AND prof.status != 'deleted'
 ;
-GRANT ALL ON central_insights_sandbox.ap_churn_demos TO GROUP central_insights;
+GRANT ALL ON central_insights_sandbox.tp_churn_demos TO GROUP central_insights;
