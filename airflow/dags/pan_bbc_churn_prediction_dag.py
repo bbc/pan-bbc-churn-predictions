@@ -280,7 +280,7 @@ default_args = {
 
 logging.info(f"Template searchpath: {AIRFLOW_EFS}/plugins/{PIPELINE_NAME}/src/sql/")
 dag = DAG(
-    'pan-bbc-churn-pipeline',
+    'pan-bbc-churn-pipeline-final',
     default_args=default_args,
     template_searchpath=[f"{AIRFLOW_EFS}/plugins/{PROJECT_NAME}"],
     description='Generate user churn probability predictions for iPlayer users',
