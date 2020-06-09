@@ -18,7 +18,7 @@ TBA
 BEGIN;
 
 SET LOCAL search_path = 'central_insights_sandbox';
---DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_explore_vars;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_explore_vars;
 CREATE TABLE central_insights_sandbox.tp_churn_explore_vars AS
   SELECT
          '2019-11-24'::DATE AS maxDate, --(last Sunday)
@@ -34,7 +34,7 @@ GRANT ALL ON central_insights_sandbox.tp_churn_explore_vars TO GROUP central_ins
 -- Collect active IDs by week
 -- Potentially switch to redshift enriched, performance concerns
 
---DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids;
+DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids;
 CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_ids AS
   SELECT
          audience_id as bbc_hid3,
