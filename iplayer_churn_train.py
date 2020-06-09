@@ -50,7 +50,8 @@ print("Data loaded\n")
 EXPERIMENT_NAME=f"pan-bbc-churn-predictionst-{date.today()}"
 MLFLOW_ARTIFACT_LOCATION="s3://live-insights-mlflow/pan-bbc-churn"
 
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
+STATIC_MLFLOW_DNS="live-insi-ElasticL-1HTMB4Z6RD5FL-1258996142.eu-west-1.elb.amazonaws.com"
+mlflow.set_tracking_uri("http://" + STATIC_MLFLOW_DNS + ":5000")
 client = MlflowClient()
 experiment_id_value = mlflow.create_experiment( name=EXPERIMENT_NAME, artifact_location=MLFLOW_ARTIFACT_LOCATION )
 

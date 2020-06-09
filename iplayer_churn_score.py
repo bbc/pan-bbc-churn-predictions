@@ -55,9 +55,11 @@ save_shap_sample = True
 SCORE_SAMPLE_FILE="../data/input/iplayer_churn_score_sample.csv"
 df=pd.read_csv(SCORE_SAMPLE_FILE)
 BUCKET_NAME="live-insights-pan-bbc-churn-predictions"
+MLFLOW_ARTIFACT_LOCATION="s3://live-insights-mlflow/pan-bbc-churn"
 
+STATIC_MLFLOW_DNS="live-insi-ElasticL-1HTMB4Z6RD5FL-1258996142.eu-west-1.elb.amazonaws.com"
 
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_tracking_uri("http://" + STATIC_MLFLOW_DNS + ":5000")
 client = MlflowClient()
 
 EXPERIMENT_NAME=f"pan-bbc-churn-predictionst-{date.today()}"
