@@ -19,7 +19,7 @@ BEGIN;
 
 SET LOCAL search_path = 'central_insights_sandbox';
 --DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_explore_vars;
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_explore_vars AS
+CREATE TABLE central_insights_sandbox.tp_churn_explore_vars AS
   SELECT
          '2019-11-24'::DATE AS maxDate, --(last Sunday)
          dateadd('days',-((n_cohorts+17)*7),maxDate) as minDate,
@@ -35,7 +35,7 @@ GRANT ALL ON central_insights_sandbox.tp_churn_explore_vars TO GROUP central_ins
 -- Potentially switch to redshift enriched, performance concerns
 
 --DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids;
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_weekly_active_ids AS
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_ids AS
   SELECT
          audience_id as bbc_hid3,
 --          destination,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_weekly_active_ids A
 GRANT ALL ON central_insights_sandbox.tp_churn_weekly_active_ids TO GROUP central_insights;
 
 --DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_cohorts;
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_cohorts
+CREATE TABLE central_insights_sandbox.tp_churn_cohorts
   DISTKEY ( bbc_hid3 )  AS
   SELECT bbc_hid3,
          cohort,
@@ -107,7 +107,7 @@ GRANT ALL ON central_insights_sandbox.tp_churn_cohorts TO GROUP central_insights
 --DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids_deleteme;
 ALTER TABLE central_insights_sandbox.tp_churn_weekly_active_ids RENAME TO tp_churn_weekly_active_ids_deleteme;
 -- DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_ids;
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_weekly_active_ids AS
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_ids AS
   SELECT ids.*,
          coh.cohort,
          coh.fresh
@@ -121,7 +121,7 @@ GRANT ALL ON central_insights_sandbox.tp_churn_weekly_active_ids TO GROUP centra
 
 -- lookup of the feature date ranges for each cohort
 --DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_cohort_dates;
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_cohort_dates as
+CREATE TABLE central_insights_sandbox.tp_churn_cohort_dates as
 SELECT DISTINCT
        cohort,
        minDate,
@@ -135,7 +135,7 @@ GRANT ALL ON central_insights_sandbox.tp_churn_cohort_dates TO GROUP central_ins
 
 
 -- Add most recent week to variable set
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_explore_vars_1 AS
+CREATE TABLE central_insights_sandbox.tp_churn_explore_vars_1 AS
   SELECT *,
          (select max(week) from central_insights_sandbox.tp_churn_weekly_active_ids) as maxWeek
   FROM central_insights_sandbox.tp_churn_explore_vars
@@ -147,7 +147,7 @@ GRANT ALL ON central_insights_sandbox.tp_churn_explore_vars TO GROUP central_ins
 
 -- Pivot to create 15 weeks of events as columns
 --DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_weekly_active_pivot;
-CREATE TABLE IF NOT EXISTS central_insights_sandbox.tp_churn_weekly_active_pivot
+CREATE TABLE central_insights_sandbox.tp_churn_weekly_active_pivot
   distkey (bbc_hid3)
   sortkey (destination)
   AS
