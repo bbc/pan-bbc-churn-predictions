@@ -48,9 +48,13 @@ FEATURE_TRAINING_SET="../data/input/iplayer_training_set.csv"
 df = pd.read_csv(FEATURE_TRAINING_SET)
 print("Data loaded\n")
 EXPERIMENT_NAME=f"pan-bbc-churn-predictionst-{date.today()}"
-MLFLOW_ARTIFACT_LOCATION="s3://live-insights-mlflow/pan-bbc-churn"
 
-STATIC_MLFLOW_DNS="live-insi-ElasticL-1HTMB4Z6RD5FL-1258996142.eu-west-1.elb.amazonaws.com"
+#MLFLOW_ARTIFACT_LOCATION="s3://live-insights-mlflow/pan-bbc-churn"
+MLFLOW_ARTIFACT_LOCATION="s3://test-insights-mlflow/pan-bbc-churn"
+
+#STATIC_MLFLOW_DNS="live-insi-ElasticL-1HTMB4Z6RD5FL-1258996142.eu-west-1.elb.amazonaws.com"
+STATIC_MLFLOW_DNS="test-cent-ElasticL-4T78439GRGUU-182062041.eu-west-1.elb.amazonaws.com"
+
 mlflow.set_tracking_uri("http://" + STATIC_MLFLOW_DNS + ":5000")
 client = MlflowClient()
 experiment_id_value = mlflow.create_experiment( name=EXPERIMENT_NAME, artifact_location=MLFLOW_ARTIFACT_LOCATION )
