@@ -22,14 +22,15 @@ DROP TABLE IF EXISTS central_insights_sandbox.tp_churn_explore_vars;
 CREATE TABLE central_insights_sandbox.tp_churn_explore_vars AS
   SELECT
          '2019-11-24'::DATE AS maxDate, --(last Sunday)
-         dateadd('days',-((n_cohorts+17)*7),maxDate) as minDate,
-         n_cohorts
+         dateadd('days',-((cohorts+17)*7),maxDate) as minDate,
+         cohorts
   FROM (
-       SELECT 6 as n_cohorts
-         ) n_cohorts
+       SELECT 6 as cohorts
+         ) cohorts
 
 ;
 GRANT ALL ON central_insights_sandbox.tp_churn_explore_vars TO GROUP central_insights;
+
 
 -- Collect active IDs by week
 -- Potentially switch to redshift enriched, performance concerns
