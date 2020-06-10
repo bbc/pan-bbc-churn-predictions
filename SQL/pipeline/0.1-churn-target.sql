@@ -86,7 +86,7 @@ CREATE TABLE central_insights_sandbox.tp_churn_cohorts
                0 as fresh
         FROM (
                SELECT bbc_hid3,
-                      cast(ceil(random() * ((SELECT n_cohorts
+                      cast(ceil(random() * ((SELECT cohorts
                                              FROM central_insights_sandbox.tp_churn_explore_vars))) -
                            1 AS INT) AS cohort
                FROM (SELECT DISTINCT bbc_hid3
