@@ -59,10 +59,10 @@ BUCKET_NAME="live-insights-pan-bbc-churn-predictions"
 MLFLOW_ARTIFACT_LOCATION="s3://test-insights-mlflow/pan-bbc-churn"
 
 #STATIC_MLFLOW_DNS="live-insi-ElasticL-1HTMB4Z6RD5FL-1258996142.eu-west-1.elb.amazonaws.com"
-STATIC_MLFLOW_DNS="test-cent-ElasticL-4T78439GRGUU-182062041.eu-west-1.elb.amazonaws.com"
+STATIC_MLFLOW_DNS="internal-test-cent-ElasticL-1JMI1J7OHSO75-885085947.eu-west-1.elb.amazonaws.com"
 
 
-mlflow.set_tracking_uri("http://" + STATIC_MLFLOW_DNS + ":5000")
+mlflow.set_tracking_uri("http://" + STATIC_MLFLOW_DNS + ":7453")
 client = MlflowClient()
 
 EXPERIMENT_NAME=f"pan-bbc-churn-predictionst-{date.today()}"
