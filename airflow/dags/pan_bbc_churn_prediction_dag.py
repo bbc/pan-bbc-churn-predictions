@@ -411,6 +411,18 @@ churn_uas_follows = PostgresOperator(
     dag=dag
 )
 
+churn_time_and_day = PostgresOperator(
+    task_id='churn_time_and_day',
+    postgres_conn_id='scv_redshift',
+    autocommit=False,
+    sql="SQL/pipeline/0.11-churn-timeandday.sql",
+    params={
+        'SCHEMANAME': SCHEMA
+    },
+    dag=dag
+)
+
+
 churn_iplayer_featureset = PostgresOperator(
     task_id='churn_iplayer_featureset',
     postgres_conn_id='scv_redshift',
@@ -604,7 +616,7 @@ dummy_task=DummyOperator(
 
 #Set order
 churn_target >> churn_sounds >> churn_affinity >> churn_lastweek >> churn_demos >> churn_freq_segs >> \
-    churn_devices >> churn_content >> churn_marketing >> churn_uas_follows >> churn_iplayer_featureset >> churn_sounds_featureset \
+    churn_devices >> churn_content >> churn_marketing >> churn_uas_follows >> churn_time_and_day >> churn_iplayer_featureset >> churn_sounds_featureset \
 >> [unload_trainining_set, unload_score_set] >> aws_job_submission >>  copy_historic_data_to_overall_storage >> dummy_task >> get_credentials_for_s3_task >> append_propensity_scores
 
 # Steps
