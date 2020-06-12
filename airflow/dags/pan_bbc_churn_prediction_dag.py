@@ -616,13 +616,5 @@ dummy_task=DummyOperator(
 
 #Set order
 churn_target >> churn_sounds >> churn_affinity >> churn_lastweek >> churn_demos >> churn_freq_segs >> \
-    churn_devices >> churn_content >> churn_marketing >> churn_uas_follows >> churn_time_and_day >> churn_iplayer_featureset >> churn_sounds_featureset \
->> [unload_trainining_set, unload_score_set] >> aws_job_submission >>  copy_historic_data_to_overall_storage >> dummy_task >> get_credentials_for_s3_task >> append_propensity_scores
-
-# Steps
-'''
--integrate with mlflow (here, adapt shell script to copy mlflow artifacts back and copy historic data to overall storage)<--1h
--deploy to LIVE<--1h --move to Done
--write documentation on readme --move to Done
-
-'''
+    churn_devices >> churn_content >> churn_marketing >> churn_uas_follows >> churn_time_and_day >> churn_iplayer_featureset >> churn_sounds_featureset >> \
+get_credentials_for_s3_task >> [unload_trainining_set, unload_score_set] >> aws_job_submission >>  copy_historic_data_to_overall_storage >> dummy_task >> append_propensity_scores

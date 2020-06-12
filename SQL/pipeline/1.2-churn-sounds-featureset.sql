@@ -51,7 +51,6 @@ SELECT
   events.stw_12,
   events.stw_13,
   events.stw_14,
-  events.stw_15,
 
   -- weekly events // churn-target
   events.ew_0,
@@ -69,7 +68,6 @@ SELECT
   events.ew_12,
   events.ew_13,
   events.ew_14,
-  events.ew_15,
 
   -- iplayer linear regression // churn-target
   case when iplayer_linreg.bbc_hid3 is not null then 1 else 0 end as iplayer_user,
