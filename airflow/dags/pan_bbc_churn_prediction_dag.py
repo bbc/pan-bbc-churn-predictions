@@ -442,19 +442,20 @@ churn_sounds_featureset = PostgresOperator(
         'SCHEMANAME': SCHEMA
     },
     dag=dag
-)
+
 
 unload_trainining_set = MyPostgresOperator(
     task_id='unload_trainining_set',
     postgres_conn_id='scv_redshift',
-    autocommit=False,
+    autocommit=True,
     sql="SQL/pipeline/unload_churn_train.sql",
     parameters_dict={
         'SCHEMANAME': SCHEMA,
         'S3_OUTPUT_PATH': f"{s3_path_input_training}/iplayer_training_set.csv",
-        'AWS_ACCESS_KEY_ID': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='AccessKeyId') }}}}",
-        'AWS_SECRET_ACCESS_KEY': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='SecretAccessKey') }}}}",
-        'TOKEN': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='SessionToken') }}}}"
+        'AWS_ACCESS_KEY_ID': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='AccessKeyId') }}}}",
+        'AWS_SECRET_ACCESS_KEY': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='SecretAccessKey') }}}}",
+        'TOKEN': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='SessionToken') }}}}"
+
     },
     dag=dag
 )
@@ -462,15 +463,15 @@ unload_trainining_set = MyPostgresOperator(
 unload_score_set = MyPostgresOperator(
     task_id='unload_score_set',
     postgres_conn_id='scv_redshift',
-    autocommit=False,
+    autocommit=True,
     sql="SQL/pipeline/unload_churn_score.sql",
     parameters_dict={
         'SCHEMANAME': SCHEMA,
         'S3_OUTPUT_PATH':f"{s3_path_input_score}/iplayer_churn_score_sample.csv",
-         'AWS_ACCESS_KEY_ID': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='AccessKeyId') }}}}",
-        'AWS_SECRET_ACCESS_KEY': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='SecretAccessKey') }}}}",
-        'TOKEN': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='SessionToken') }}}}"
-    },
+        'AWS_ACCESS_KEY_ID': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='AccessKeyId') }}}}",
+        'AWS_SECRET_ACCESS_KEY': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='SecretAccessKey') }}}}",
+        'TOKEN': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='SessionToken') }}}}"
+            },
     dag=dag
 )
 command={
