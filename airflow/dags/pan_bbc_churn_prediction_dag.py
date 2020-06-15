@@ -578,7 +578,7 @@ copy_charts = PythonOperator(
 copy_historic_data_to_overall_storage=[copy_propensity_scores, copy_models, copy_shap_values, copy_logs, copy_charts]
 
 get_credentials_for_s3_task = PythonOperator(
-    task_id='get_credentials_for_s3_task',
+    task_id='get_credentials_for_s3_task_live',
     python_callable=get_credentials_for_s3,
     provide_context=True,
     dag=dag )
@@ -592,9 +592,9 @@ append_propensity_scores=MyPostgresOperator(
         'SCHEMANAME': SCHEMA,
         'S3_PATH': f"{s3_path_current_propensity_scores}/model_scores.csv",
         'TABLENAME':'iplayer_churn_propensity_scores',
-        'AWS_ACCESS_KEY_ID': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='AccessKeyId') }}}}",
-        'AWS_SECRET_ACCESS_KEY': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='SecretAccessKey') }}}}",
-        'TOKEN': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task', key='SessionToken') }}}}"
+        'AWS_ACCESS_KEY_ID': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='AccessKeyId') }}}}",
+        'AWS_SECRET_ACCESS_KEY': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='SecretAccessKey') }}}}",
+        'TOKEN': f"{{{{ ti.xcom_pull(task_ids='get_credentials_for_s3_task_live', key='SessionToken') }}}}"
     },
     dag=dag
 )
