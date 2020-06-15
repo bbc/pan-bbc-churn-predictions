@@ -442,7 +442,7 @@ churn_sounds_featureset = PostgresOperator(
         'SCHEMANAME': SCHEMA
     },
     dag=dag
-
+)
 
 unload_trainining_set = MyPostgresOperator(
     task_id='unload_trainining_set',
