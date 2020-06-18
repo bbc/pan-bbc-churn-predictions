@@ -482,8 +482,8 @@ command={
 aws_job_submission = AWSBatchOperator(
     task_id='aws-batch-job-submission',
     job_name='airflow-job-submission-and-run-' +  datetime.today().strftime('%Y-%m-%d'),
-    job_definition='int-Airflow-Pan-BBC-Churn-Classification',
-    job_queue='first-run-job-queue',
+    job_definition='live-Airflow-Pan-BBC-Churn-Classification-final',
+    job_queue='live-Airflow-Pan-BBC-Churn--JobQueue',
     overrides=command,
     dag=dag)
 
