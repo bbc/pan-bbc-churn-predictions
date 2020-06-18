@@ -485,6 +485,7 @@ aws_job_submission = AWSBatchOperator(
     job_definition='live-Airflow-Pan-BBC-Churn-Classification-final',
     job_queue='live-Airflow-Pan-BBC-Churn--JobQueue',
     overrides=command,
+    aws_conn_id='aws_default',
     dag=dag)
 
 
