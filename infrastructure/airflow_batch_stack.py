@@ -9,7 +9,7 @@ from troposphere.ecr import Repository
 from troposphere.iam import InstanceProfile, PolicyType, Role, Policy
 from troposphere.policies import AutoScalingRollingUpdate, UpdatePolicy
 from troposphere.batch import ComputeEnvironment, ComputeResources, LaunchTemplateSpecification, JobQueue, \
-    ComputeEnvironmentOrder, JobDefinition, ContainerProperties, Environment, Timeout
+    ComputeEnvironmentOrder, JobDefinition, ContainerProperties, Environment, Timeout, Ec2ConfigurationObject
 
 
 def asg_tag(key, value):
@@ -29,7 +29,7 @@ pipeline = t.add_parameter(Parameter(
 image_name = t.add_parameter(Parameter(
     "ImageName",
     Type="String",
-    Default="pan-bbc-churn-predictions-2"
+    Default="pan-bbc-churn-predictions-3"
 ))
 
 image_tag = t.add_parameter(Parameter(
@@ -174,6 +174,7 @@ BatchSecurityGroup = t.add_resource(SecurityGroup(
 
 BatchComputeEnvironment = t.add_resource(ComputeEnvironment(
     'ComputeEnvironment',
+    ComputeEnvironmentName=Sub('${Environment}-${Pipeline}-ComputeEnvironment-3'),
     Type='MANAGED',
     ServiceRole=Ref(BatchServiceRole),
     ComputeResources=ComputeResources(
@@ -185,6 +186,10 @@ BatchComputeEnvironment = t.add_resource(ComputeEnvironment(
         PlacementGroup="ExampleClusterGroup",
         InstanceTypes=['m4.large'],
         SpotIamFleetRole=Ref(SpotRole),
+        Ec2Configuration=[Ec2ConfigurationObject(
+            'Ec2Configuration',
+            ImageType='ECS_AL2'
+        )],
         InstanceRole=Ref(BatchInstanceProfile),
         SecurityGroupIds=[GetAtt(BatchSecurityGroup, 'GroupId')],
         Subnets=private_subnets,
